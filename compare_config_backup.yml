@@ -1,0 +1,54 @@
+
+- name: prepare directory to store log files
+  hosts: all
+  strategy: linear
+  
+  tasks:
+    - name: cleanup directory to store log files
+      file:
+        path: files/reports
+        state: absent
+      when: ("files/reports" is exists)
+      delegate_to: localhost
+      tags:
+        - always
+
+    - name: prepare directory to store log files
+      file:
+        path: "{{item}}"
+        state: directory
+      with_items:
+        - files/backups/{{inventory_hostname}}
+        - files/reports
+      when: (item is not exists)
+      delegate_to: localhost
+      tags:
+        - always
+
+- name: collect configuration backup for network devices
+  hosts: all
+  strategy: linear
+  
+  tasks:
+    - name: include tasks for network ios devices
+      include_tasks: tasks/network_ios_devices.yml
+      when: (ansible_network_os is eq("ios"))
+      tags:
+        - always
+
+- name: compare configuration backup for network devices
+  hosts: NR01 #
+  strategy: linear
+  
+  vars:
+    day: "Sat" #
+    
+  tags:
+    - never
+
+  tasks:
+    - name: compare configuration backup for network devices
+      shell: diff -u files/backups/{{inventory_hostname}}/{{inventory_hostname}}.{{day}}.backup files/backups/{{inventory_hostname}}/{{inventory_hostname}}.backup > files/reports/{{inventory_hostname}}.diff
+      delegate_to: localhost
+      tags:
+        - never

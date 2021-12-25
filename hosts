@@ -1,0 +1,5 @@
+
+[network_ios_devices]
+
+NR01 ansible_host=10.0.254.211
+NR02 ansible_host=10.0.254.212
